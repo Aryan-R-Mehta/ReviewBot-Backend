@@ -17,6 +17,7 @@ class GitHubOAuthService:
             "redirect_uri": settings.GITHUB_CALLBACK_URL,
             "state": state,
             "allow_signup": "true",
+            "scope": "read:user user:email repo",
         }
 
         response = requests.Request(
@@ -89,3 +90,42 @@ class GitHubOAuthService:
                 return email["email"]
 
         return ""
+
+    @staticmethod
+    def get_repos(access_token, page=1, per_page=10):
+        response = requests.get(
+            f"{GITHUB_API_URL}/user/repos",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Accept": "application/vnd.github+json",
+            },
+            params={
+                "sort": "updated",
+                "affiliation": "owner",
+                "page": page,
+                "per_page": per_page,
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    @staticmethod
+    def get_pulls(access_token, owner, repo, page=1, per_page=10):
+        response = requests.get(
+            f"{GITHUB_API_URL}/repos/{owner}/{repo}/pulls",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Accept": "application/vnd.github+json",
+            },
+            params={
+                "state": "open",
+                "sort": "updated",
+                "direction": "desc",
+                "page": page,
+                "per_page": per_page,
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
